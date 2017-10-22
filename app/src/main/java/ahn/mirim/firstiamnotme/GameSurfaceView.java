@@ -40,6 +40,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         gameState=gameThread.getGameState();
         gameThread.pauseGame();
+        gameThread.player.stop();
     }
 
     @Override

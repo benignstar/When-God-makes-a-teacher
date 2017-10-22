@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
+import android.media.MediaPlayer;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -18,7 +19,7 @@ public class GameThread extends Thread{
     static public int width, height;
     private static boolean paused=false;
 
-    private Bitmap background[]=new Bitmap[3];
+    private Bitmap background[]=new Bitmap[7];
     public static Bowl bowl;
     public static Cup cup;
     public static Flour flour;
@@ -31,6 +32,7 @@ public class GameThread extends Thread{
     public static Teacher teacher;
     static public int step;
     static int result;
+    static MediaPlayer player;
 
     static public boolean canSelect;
     public final static int STEP1=0;
@@ -53,7 +55,7 @@ public class GameThread extends Thread{
         width=point.x;
         height=point.y;
 
-        for(int i=0; i<3; i++) {
+        for(int i=0; i<7; i++) {
             background[i] = BitmapFactory.decodeResource(context.getResources(), R.drawable.background00+i);
             background[i] = Bitmap.createScaledBitmap(background[i], width, height, true);
         }
@@ -74,6 +76,7 @@ public class GameThread extends Thread{
             teacher = gameState.teacher;
             step=gameState.step;
             canSelect=gameState.canSelect;
+            player=MediaPlayer.create(context, R.raw.vacation_uke);
         }
         else {
             bowl=new Bowl();
@@ -88,7 +91,13 @@ public class GameThread extends Thread{
             teacher = new Teacher();
             step=0;
             canSelect=true;
+            player=MediaPlayer.create(context, R.raw.vacation_uke);
         }
+
+        player.setVolume(0.7f, 0.7f);
+        player.setLooping(true);
+
+        player.start();
         resumeGame();
     }
 
@@ -123,7 +132,7 @@ public class GameThread extends Thread{
     }
 
     public void draw(Canvas canvas){
-        canvas.drawBitmap(background[0], 0, 0, null);
+        canvas.drawBitmap(background[step], 0, 0, null);
         switch (step) {
             case STEP1:
                 canvas.drawBitmap(bowl.image, bowl.x, bowl.y, null);
@@ -160,9 +169,13 @@ public class GameThread extends Thread{
                 canvas.drawBitmap(next.image, next.x, next.y, null);
                 break;
             case RESULT :
-                if(result!=-1)
-                    canvas.drawBitmap(background[1], 0, 0, null);
-                else canvas.drawBitmap(background[2], 0, 0, null);
+                if(result!=-1) {
+                    canvas.drawBitmap(background[5], 0, 0, null);
+                }
+                else {
+                    canvas.drawBitmap(background[6], 0, 0, null);
+                    player.stop();
+                }
                 canvas.drawBitmap(teacher.image, teacher.x, teacher.y, null);
                 canvas.drawBitmap(teacher.name, teacher.nx, teacher.ny, null);
                 canvas.drawBitmap(teacher.text, teacher.nx, teacher.ny+teacher.nh, null);

@@ -29,7 +29,7 @@ public class Next {
             temp[i] = BitmapFactory.decodeResource(GameThread.context.getResources(), R.drawable.next00+i);
             temp[i] = Bitmap.createScaledBitmap(temp[i], w, h, true);
         }
-        main = BitmapFactory.decodeResource(GameThread.context.getResources(), R.drawable.main);
+        main = BitmapFactory.decodeResource(GameThread.context.getResources(), R.drawable.main_button);
         main = Bitmap.createScaledBitmap(main, w, h, true);
         image=temp[0];
         area=new Rect(x, y, x+w, y+h);
