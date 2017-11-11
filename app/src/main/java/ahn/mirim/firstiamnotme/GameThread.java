@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -15,31 +16,29 @@ import android.view.WindowManager;
 
 public class GameThread extends Thread{
     private SurfaceHolder holder;
-    static public Context context;
-    static public int width, height;
-    private static boolean paused=false;
+    private Context context;
+    private float width, height;
+    private boolean paused;
 
+    private int stage;
     private Bitmap background[]=new Bitmap[7];
-    public static Bowl bowl;
-    public static Cup cup;
-    public static Flour flour;
-    public static Next next;
-    public static Milk milk;
-    public static Essences essences;
-    public static Spice spice;
-    public static Fruits fruits;
-    public static Recipe recipe;
-    public static Teacher teacher;
-    static public int step;
-    static int result;
-    static MediaPlayer player;
+    private Container container;
+    private Next next;
 
-    static public boolean canSelect;
-    public final static int STEP1=0;
-    public final static int STEP2=1;
-    public final static int STEP3=2;
-    public final static int STEP4=3;
-    public final static int STEP5=4;
+    private DeterminePhysique determinePhysique;
+    private DetermineHeight determineHeight;
+    private DetermineGender determineGender;
+    private DetermineCharacter determineCharacter;
+    private DetermineFavoriteColor determineFavoriteColor;
+    private ShowResult showResult;
+
+    private MediaPlayer player;
+
+    public final static int STAGE_ONE_PHYSIQUE=0;
+    public final static int STAGE_TWO_HEIGHT=1;
+    public final static int STAGE_THREE_GENDER=2;
+    public final static int STAGE_FOUR_CHARACTER=3;
+    public final static int STAGE_FIVE_COLOR=4;
     public final static int RESULT=5;
 
     private final static int FRAME_PERIOD = 1000 / 60;
@@ -57,48 +56,41 @@ public class GameThread extends Thread{
 
         for(int i=0; i<7; i++) {
             background[i] = BitmapFactory.decodeResource(context.getResources(), R.drawable.background00+i);
-            background[i] = Bitmap.createScaledBitmap(background[i], width, height, true);
+            background[i] = Bitmap.createScaledBitmap(background[i], (int)width, (int)height, true);
         }
-
-
-
 
         if(gameState != null){
-            bowl=gameState.bowl;
-            cup=gameState.cup;
-            flour=gameState.flour;
+            stage=gameState.stage;
+            container=gameState.container;
             next=gameState.next;
-            milk=gameState.milk;
-            essences=gameState.essences;
-            spice=gameState.spice;
-            fruits=gameState.fruits;
-            recipe=gameState.recipe;
-            teacher = gameState.teacher;
-            step=gameState.step;
-            canSelect=gameState.canSelect;
-            player=MediaPlayer.create(context, R.raw.vacation_uke);
+            determinePhysique=gameState.determinePhysique;
+            determineHeight=gameState.determineHeight;
+            determineGender=gameState.determineGender;
+            determineCharacter=gameState.determineCharacter;
+            determineFavoriteColor=gameState.determineFavoriteColor;
+            player=gameState.player;
+            next.setGameThread(this);
+            container.setGameThread(this);
         }
         else {
-            bowl=new Bowl();
-            cup=new Cup();
-            flour=new Flour();
-            next=new Next();
-            milk=new Milk();
-            essences=new Essences();
-            spice=new Spice();
-            fruits=new Fruits();
-            recipe=new Recipe();
-            teacher = new Teacher();
-            step=0;
-            canSelect=true;
+            stage=0;
+            container=new Container(this);
+            next=new Next(this);
+            determinePhysique=new DeterminePhysique(this, container, next);
+            determineHeight=new DetermineHeight(this, container, next);
+            determineGender=new DetermineGender(this, container, next);
+            determineCharacter=new DetermineCharacter(this, container, next);
+            determineFavoriteColor=new DetermineFavoriteColor(this,container,next);
             player=MediaPlayer.create(context, R.raw.vacation_uke);
+
         }
+
+        paused=false;
 
         player.setVolume(0.7f, 0.7f);
         player.setLooping(true);
 
         player.start();
-        resumeGame();
     }
 
     @Override
@@ -123,85 +115,38 @@ public class GameThread extends Thread{
             if(sleepTime > 0) {
                 try {
                     Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } // try - catch
-            } // if
-        } // while
+                } catch (InterruptedException e) { e.printStackTrace(); }
+            }
+        }
 
     }
 
     public void draw(Canvas canvas){
-        canvas.drawBitmap(background[step], 0, 0, null);
-        switch (step) {
-            case STEP1:
-                canvas.drawBitmap(bowl.image, bowl.x, bowl.y, null);
-                canvas.drawBitmap(cup.image, cup.x, cup.y, null);
-                canvas.drawBitmap(flour.image, flour.x, flour.y, null);
-                canvas.drawBitmap(next.image, next.x, next.y, null);
+        canvas.drawBitmap(background[stage], 0, 0, null);
+        switch (stage){
+            case STAGE_ONE_PHYSIQUE:
+                determinePhysique.draw(canvas);
                 break;
-            case STEP2 :
-                canvas.drawBitmap(bowl.image, bowl.x, bowl.y, null);
-                canvas.drawBitmap(cup.image, cup.x, cup.y, null);
-                canvas.drawBitmap(milk.image, milk.x, milk.y, null);
-                canvas.drawBitmap(next.image, next.x, next.y, null);
+            case STAGE_TWO_HEIGHT:
+                determineHeight.draw(canvas);
                 break;
-            case STEP3 :
-                canvas.drawBitmap(bowl.image, bowl.x, bowl.y, null);
-                for(int i=0; i<2; i++)
-                    canvas.drawBitmap(essences.image[i], essences.x[i], essences.y, null);
-                canvas.drawBitmap(next.image, next.x, next.y, null);
+            case STAGE_THREE_GENDER:
+                determineGender.draw(canvas);
                 break;
-            case STEP4:
-                canvas.drawBitmap(bowl.image, bowl.x, bowl.y, null);
-                for(int i=0; i<8; i++)
-                    canvas.drawBitmap(spice.image[i], spice.x[i%4], spice.y[i/4], null);
-                if(spice.select)
-                    canvas.drawBitmap(spice.check, spice.x[spice.select_index%4], spice.y[spice.select_index/4], null);
-                canvas.drawBitmap(next.image, next.x, next.y, null);
+            case STAGE_FOUR_CHARACTER:
+                determineCharacter.draw(canvas);
                 break;
-            case STEP5:
-                canvas.drawBitmap(bowl.image, bowl.x, bowl.y, null);
-                for(int i=0; i<10; i++)
-                    canvas.drawBitmap(fruits.image[i], fruits.x[i%5], fruits.y[i/5], null);
-                if(fruits.select)
-                    canvas.drawBitmap(fruits.check, fruits.x[fruits.select_index%5], fruits.y[fruits.select_index/5], null);
-                canvas.drawBitmap(next.image, next.x, next.y, null);
+            case STAGE_FIVE_COLOR:
+                determineFavoriteColor.draw(canvas);
                 break;
-            case RESULT :
-                if(result!=-1) {
-                    canvas.drawBitmap(background[5], 0, 0, null);
-                }
-                else {
-                    canvas.drawBitmap(background[6], 0, 0, null);
-                    player.stop();
-                }
-                canvas.drawBitmap(teacher.image, teacher.x, teacher.y, null);
-                canvas.drawBitmap(teacher.name, teacher.nx, teacher.ny, null);
-                canvas.drawBitmap(teacher.text, teacher.nx, teacher.ny+teacher.nh, null);
-                canvas.drawBitmap(next.image, next.x, next.y, null);
-
+            case RESULT:
+                showResult.draw(canvas);
                 break;
-
         }
         holder.unlockCanvasAndPost(canvas);
     }
 
-    public static void nextStep(){
-        step++;
-        cup.empty();
-        next.reset();
-        canSelect=true;
-        if(step==RESULT) {
-            result = recipe.check(Bowl.code);
-            teacher.setTeacher(result);
-
-            next.active();
-            next.change();
-        }
-
-    }
-    public static void pauseGame() {
+    public void pauseGame() {
         paused=true;
     }
 
@@ -209,164 +154,93 @@ public class GameThread extends Thread{
         paused=false;
     }
 
-    public static void reset(){
-        bowl=new Bowl();
-        cup=new Cup();
-        flour=new Flour();
-        next=new Next();
-        milk=new Milk();
-        essences=new Essences();
-        spice=new Spice();
-        fruits=new Fruits();
-        recipe=new Recipe();
-        teacher = new Teacher();
-        step=0;
-        canSelect=true;
-    }
-    public static void close(){
+    public void exit(){
         pauseGame();
+        musicStop();
         context.startActivity(new Intent(context, MainActivity.class));
         ((Activity)context).finish();
     }
+
+
     public boolean handleTouchEvent(MotionEvent event){
-        int x, y;
-
-        x=(int) event.getX();
-        y=(int) event.getY();
-
-        if(canSelect) {
-            switch (step) {
-                case STEP1 :
-                    if (flour.area.contains(x, y))
-                        return flour.touchEvent(event);
-
-                    else if (cup.area.contains(x, y))
-                        return cup.touchEvent(event);
-
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        flour.restore();
-                        cup.restore();
-                    }
-                    break;
-                case STEP2 :
-                    if (milk.area.contains(x, y))
-                        return milk.touchEvent(event);
-
-                    else if (cup.area.contains(x, y))
-                      return cup.touchEvent(event);
-
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        milk.restore();
-                        cup.restore();
-                    }
-                    break;
-                case STEP3 :
-
-                    if (essences.area[0].contains(x, y))
-                        return essences.touchEvent(event, 0);
-
-                    else if (essences.area[1].contains(x, y))
-                        return essences.touchEvent(event, 1);
-
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        essences.restore(0);
-                        essences.restore(1);
-                    }
-                    break;
-                case STEP4:
-                    if(spice.area[0].contains(x, y)){
-                        spice.touchEvent(event, 0);
-                    }
-
-                    else if(spice.area[1].contains(x, y)){
-                        spice.touchEvent(event, 1);
-                    }
-                    else if(spice.area[2].contains(x, y)){
-                        spice.touchEvent(event, 2);
-                    }
-                    else if(spice.area[3].contains(x, y)){
-                        spice.touchEvent(event, 3);
-                    }
-                    else if(spice.area[4].contains(x, y)){
-                        spice.touchEvent(event, 4);
-                    }
-                    else if(spice.area[5].contains(x, y)){
-                        spice.touchEvent(event, 5);
-                    }
-                    else if(spice.area[6].contains(x, y)){
-                        spice.touchEvent(event, 6);
-                    }
-                    else if(spice.area[7].contains(x, y)){
-                        spice.touchEvent(event, 7);
-                    }
-
-                    if(spice.select)
-                        if (next.area.contains(x, y))
-                            return next.touchEvent(event);
-                    break;
-                case STEP5:
-                    if(fruits.area[0].contains(x, y)){
-                        fruits.touchEvent(event, 0);
-                    }
-                    else if(fruits.area[1].contains(x, y)){
-                        fruits.touchEvent(event, 1);
-                    }
-                    else if(fruits.area[2].contains(x, y)){
-                        fruits.touchEvent(event, 2);
-                    }
-                    else if(fruits.area[3].contains(x, y)){
-                        fruits.touchEvent(event, 3);
-                    }
-                    else if(fruits.area[4].contains(x, y)){
-                        fruits.touchEvent(event, 4);
-                    }
-                    else if(fruits.area[5].contains(x, y)){
-                        fruits.touchEvent(event, 5);
-                    }
-                    else if(fruits.area[6].contains(x, y)){
-                        fruits.touchEvent(event, 6);
-                    }
-                    else if(fruits.area[7].contains(x, y)){
-                        fruits.touchEvent(event, 7);
-                    }
-                    else if(fruits.area[8].contains(x, y)){
-                        fruits.touchEvent(event, 8);
-                    }
-                    else if(fruits.area[9].contains(x, y)){
-                        fruits.touchEvent(event, 9);
-                    }
-
-                    if(fruits.select)
-                        if (next.area.contains(x, y))
-                            return next.touchEvent(event);
-                    break;
-                case RESULT:
-                    if (next.area.contains(x, y))
-                        return next.touchEvent(event);
-            }
+        switch (stage) {
+            case STAGE_ONE_PHYSIQUE :
+                determinePhysique.handleTouchEvent(event);
+                break;
+            case STAGE_TWO_HEIGHT:
+                determineHeight.handleTouchEvent(event);
+                break;
+            case STAGE_THREE_GENDER:
+                determineGender.handleTouchEvent(event);
+                break;
+            case STAGE_FOUR_CHARACTER:
+                determineCharacter.handleTouchEvent(event);
+                break;
+            case STAGE_FIVE_COLOR:
+                determineFavoriteColor.handleTouchEvent(event);
+                break;
+            case RESULT:
+                showResult.handleTouchEvent(event);
+                break;
         }
-
-        else if (next.area.contains(x, y))
-            return next.touchEvent(event);
-
 
         return true;
     }
 
     public GameState getGameState() {
         GameState gameState=new GameState();
-        gameState.bowl=bowl;
-        gameState.cup=cup;
-        gameState.flour=flour;
+        gameState.stage=stage;
+        gameState.container=container;
         gameState.next=next;
-        gameState.milk=milk;
-        gameState.essences=essences;
-        gameState.spice=spice;
-        gameState.fruits=fruits;
-        gameState.recipe=recipe;
-        gameState.teacher=teacher;
-        gameState.step=step;
-        gameState.canSelect=canSelect;
+        gameState.determinePhysique=determinePhysique;
+        gameState.determineHeight=determineHeight;
+        gameState.determineGender=determineGender;
+        gameState.determineCharacter=determineCharacter;
+        gameState.determineFavoriteColor=determineFavoriteColor;
+        gameState.player=player;
         return gameState;
+    }
+
+    public void stageUp(){
+        stage++;
+        next.inactivate();
+        container.restore();
+        Log.v("d","ddsf");
+    }
+
+    public void setResult(){
+        showResult=new ShowResult(this, container.getCode());
+    }
+
+    public void musicStart(){
+        player.start();
+    }
+
+    public void musicPause(){
+        player.pause();
+    }
+
+    public void musicStop(){
+        player.stop();
+    }
+
+    public int getStage(){
+        return stage;
+    }
+
+    public void revitalize(){
+        next.revitalize();
+    }
+
+    public float getWidth(){
+        return width;
+    }
+
+    public float getHeight(){
+        return height;
+    }
+
+    public Context getContext(){
+        return context;
     }
 }

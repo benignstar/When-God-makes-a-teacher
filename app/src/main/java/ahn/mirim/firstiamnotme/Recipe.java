@@ -12,8 +12,8 @@ import java.io.InputStream;
 public class Recipe {
     String recipe[];
 
-    public Recipe(){
-        InputStream fi=GameThread.context.getResources().openRawResource(R.raw.recipe);
+    public Recipe(GameThread gameThread){
+        InputStream fi=gameThread.getContext().getResources().openRawResource(R.raw.recipe);
 
         try{
             byte[] data=new byte[fi.available()]; // 파일의 크기를 배열의 크기로
@@ -26,16 +26,13 @@ public class Recipe {
 
             for(int i=0; i<temp.length; i++){
                 recipe[i]=temp[i].trim();
-                Log.v("알림", recipe[i]);
             }
-
         }catch (IOException e){}
     }
 
     public int check(String code){
         for(int i=0; i<recipe.length; i++)
             if(code.equals(recipe[i])) {
-                Log.v("알림", recipe[i]);
                 return i;
             }
         return -1;

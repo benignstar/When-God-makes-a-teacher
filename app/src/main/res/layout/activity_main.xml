@@ -5,13 +5,13 @@
     android:weightSum="1">
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_weight="0.8"
+        android:layout_weight="0.95"
         android:layout_height="wrap_content">
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.2"
+        android:layout_weight="0.05"
         android:orientation="vertical"
         android:gravity="center">
         <ImageView
@@ -19,8 +19,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
             android:src="@drawable/play_button" />
+        <ImageView
+            android:id="@+id/help_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+
+            android:src="@drawable/help_button" />
 
     </LinearLayout>
 </LinearLayout>

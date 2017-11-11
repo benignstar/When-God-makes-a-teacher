@@ -20,6 +20,8 @@
         <activity android:name=".SurfaceViewActivity"
             android:screenOrientation="landscape"
             ></activity>
+        <activity android:name=".Help"
+            android:screenOrientation="landscape"/>
     </application>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 

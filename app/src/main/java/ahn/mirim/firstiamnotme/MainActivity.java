@@ -26,40 +26,43 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
 
-        findViewById(R.id.play_button).setOnClickListener(ClickListener);
+        findViewById(R.id.play_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, SurfaceViewActivity.class));
+                player.stop();
+                finish();
+            }
+
+        });
+
+        findViewById(R.id.help_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, Help.class));
+            }
+        });
 
 
-        player = MediaPlayer.create(this, R.raw.atelier_rorona);   	// 파일 읽기 green은 파일명
-        player.setVolume(0.7f, 0.7f); 			      		// 볼륨 설정
-        player.setLooping(true);              				// 반복 연주
+        player = MediaPlayer.create(this, R.raw.atelier_rorona);
+        player.setVolume(0.7f, 0.7f);
+        player.setLooping(true);
         player.start();
     }
 
+
     @Override
-    protected void onPause() {
-        super.onPause();
-        player.stop();
+    protected void onStop() {
+        super.onStop();
+        player.pause();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-
+    protected void onRestart() {
+        super.onRestart();
+        player.start();
     }
 
-    Button.OnClickListener ClickListener=new View.OnClickListener(){
-        @Override
-        public void onClick(View view) {
-            switch (view.getId()) {
-                case R.id.play_button :
-                    startActivity(new Intent(MainActivity.this, SurfaceViewActivity.class));
-                    player.stop();
-                    finish();
-                    break;
-
-            }
-        }
-    };
 
     @Override
     public void onBackPressed() {
