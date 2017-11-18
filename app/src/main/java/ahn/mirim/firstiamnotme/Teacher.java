@@ -9,14 +9,12 @@ import android.graphics.Rect;
  */
 
 public class Teacher extends Ingredient{
-    private Bitmap text;
-
     public Teacher(GameThread gameThread, int num){
         float width=gameThread.getWidth();
         float height=gameThread.getHeight();
 
         x=(int)(width/16*5);
-        y=(int)(height/9);
+        y=(int)(height/18*3);
         w=(int)(width/16*6);
         h=(int)(height/9*7);
         if(!(num<0)) {

@@ -205,7 +205,6 @@ public class GameThread extends Thread{
         stage++;
         next.inactivate();
         container.restore();
-        Log.v("d","ddsf");
     }
 
     public void setResult(){

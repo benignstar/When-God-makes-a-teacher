@@ -52,14 +52,14 @@ public class MainActivity extends Activity {
 
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
         player.pause();
     }
 
     @Override
-    protected void onRestart() {
-        super.onRestart();
+    protected void onResume() {
+        super.onResume();
         player.start();
     }
 
